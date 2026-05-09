@@ -251,6 +251,7 @@ h1 {
 .kb-btn.del { background: #fef2f2; border-color: #fca5a5; color: var(--wrong); }
 .kb-btn.struct { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
 .kb-btn .sup { font-size: 0.65em; vertical-align: super; }
+.kb-btn.neq { background: #fff0f6; border-color: #f9a8d4; color: #9d174d; font-size: 1rem; font-weight: 800; min-width: 48px; }
 
 /* Explanation panel */
 #explanation {
@@ -325,7 +326,7 @@ h1 {
 
 <div id="flashcard">
   <div id="category-badge">Derivative</div>
-  <div id="card-label">Answer correctly to advance</div>
+  <div id="card-label">Input the correct equation to move to the next flashcard</div>
   <div id="card-front"></div>
 </div>
 
@@ -362,7 +363,7 @@ h1 {
       <button class="kb-btn op" onclick="kbW('-')">−</button>
       <button class="kb-btn op" onclick="kbW('\\cdot')">·</button>
       <button class="kb-btn op" onclick="kbW('\\pm')">±</button>
-      <button class="kb-btn op" onclick="kbW('\\neq')">≠</button>
+      <button class="kb-btn neq" onclick="kbW('\\neq')">≠</button>
       <button class="kb-btn op" onclick="kbW('<')">&lt;</button>
       <button class="kb-btn op" onclick="kbW('>')">&gt;</button>
       <button class="kb-btn op" onclick="kbW('\\left(\\right)')">( )</button>
