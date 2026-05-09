@@ -279,6 +279,11 @@ h1 {
   color: white;
   display: none;
 }
+#next-btn {
+  background: #e8eaf2;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
 
 /* Done screen */
 #done-screen {
@@ -343,6 +348,7 @@ h1 {
 <div class="action-btns">
   <button class="btn" id="check-btn" onclick="checkAnswer()">Check Answer</button>
   <button class="btn" id="try-again-btn" onclick="tryAgain()">Try Again</button>
+  <button class="btn" id="next-btn" onclick="skipCard()" style="display:none">Next →</button>
 </div>
 
 <div id="keyboard">
@@ -853,6 +859,7 @@ function showCard() {
   answered = false;
   document.getElementById('check-btn').style.display = '';
   document.getElementById('try-again-btn').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
   document.getElementById('explanation').style.display = 'none';
   document.getElementById('correct-answer-display').innerHTML = '';
 
@@ -876,6 +883,9 @@ function norm(s) {
     .replace(/\\;/g, '')
     .replace(/\\!/g, '')
     .replace(/\\cdot/g, '')
+    .replace(/\\mathit\{([^}])\}/g, '$1')
+    .replace(/\\mathrm\{([^}])\}/g, '$1')
+    .replace(/\\text\{([^}]+)\}/g, '$1')
     .replace(/\\sin\^{?-1}?/g, '\\arcsin')
     .replace(/\\sin\^\{-1\}/g, '\\arcsin')
     .replace(/\\cos\^{?-1}?/g, '\\arccos')
@@ -884,7 +894,13 @@ function norm(s) {
     .replace(/\\tan\^\{-1\}/g, '\\arctan')
     .replace(/\^{(\d)}/g, '^$1')
     .replace(/\^\{(\d)\}/g, '^$1')
+    .replace(/\{([a-zA-Z0-9])\}/g, '$1')
     .toLowerCase();
+}
+
+// Extra leniency: also try matching after stripping all backslashes
+function normLoose(s) {
+  return norm(s).replace(/\\/g, '');
 }
 
 function checkAnswer() {
@@ -895,9 +911,10 @@ function checkAnswer() {
   const raw = mathField.latex();
   const userNorm = norm(raw);
 
-  let mainOk = card.accepted.some(a => norm(a) === userNorm);
+  const userLoose = normLoose(raw);
+  let mainOk = card.accepted.some(a => norm(a) === userNorm || normLoose(a) === userLoose);
   if (card.domainCheck) {
-    const domainOk = card.domainCheck.some(d => userNorm.includes(norm(d)));
+    const domainOk = card.domainCheck.some(d => userNorm.includes(norm(d)) || userLoose.includes(normLoose(d)));
     if (!domainOk) mainOk = false;
   }
 
@@ -915,6 +932,7 @@ function checkAnswer() {
     expDiv.style.display = 'none';
     document.getElementById('check-btn').style.display = 'none';
     document.getElementById('try-again-btn').style.display = 'none';
+    document.getElementById('next-btn').style.display = 'none';
 
     // Remove card and auto-advance
     deck.splice(currentIdx, 1);
@@ -950,7 +968,18 @@ function checkAnswer() {
 
     document.getElementById('check-btn').style.display = 'none';
     document.getElementById('try-again-btn').style.display = '';
+    document.getElementById('next-btn').style.display = '';
   }
+}
+
+function skipCard() {
+  // Move current card to end of deck (keeps it in rotation)
+  if (deck.length > 1) {
+    const card = deck.splice(currentIdx, 1)[0];
+    deck.push(card);
+    if (currentIdx >= deck.length) currentIdx = 0;
+  }
+  showCard();
 }
 
 function tryAgain() {
