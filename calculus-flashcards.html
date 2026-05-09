@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculus Flashcards</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+<style>
+:root {
+  --bg: #eef0f5;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --border: #d4d8e8;
+  --accent: #e8652a;
+  --accent2: #1b2d5f;
+  --text: #1a1e2e;
+  --muted: #6b7280;
+  --correct: #16a34a;
+  --wrong: #dc2626;
+  --trig-bg: #eef4fb;
+  --trig-border: #bdd5ef;
+  --itrig-bg: #f3eeff;
+  --itrig-border: #c9aef5;
+  --calc-bg: #eefbf3;
+  --calc-border: #a7dfc0;
+  --num-bg: #f4f5f8;
+  --num-border: #d0d4e0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 12px 32px;
+  gap: 12px;
+}
+header {
+  width: 100%;
+  max-width: 860px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+h1 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--accent2);
+}
+#progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#progress-bar-outer {
+  width: 120px;
+  height: 6px;
+  background: #d0d4e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+#progress-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+#progress-text { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+
+/* Flashcard */
+#flashcard {
+  width: 100%;
+  max-width: 860px;
+  min-height: 160px;
+  background: var(--card);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 40px;
+  box-shadow: 0 4px 24px rgba(27,45,95,0.10);
+  text-align: center;
+  position: relative;
+}
+#category-badge {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--accent);
+  background: rgba(232,101,42,0.12);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+#card-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+#card-front .katex { font-size: 1.9rem; }
+#card-front .katex-display { margin: 0; }
+
+/* Feedback */
+#feedback {
+  width: 100%;
+  max-width: 860px;
+  border-radius: 14px;
+  padding: 14px 22px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+#feedback.correct {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: var(--correct);
+}
+#feedback.wrong {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: var(--wrong);
+}
+#correct-answer-label {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+#correct-answer-display { margin-top: 6px; }
+#correct-answer-display .katex { font-size: 1.3rem; }
+#correct-answer-display .katex-display { margin: 0; }
+
+/* Input area */
+.input-area {
+  width: 100%;
+  max-width: 860px;
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+#math-input-wrap {
+  flex: 1;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  cursor: text;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.2s;
+}
+#math-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(232,101,42,0.15);
+}
+.mq-math-mode { font-size: 1.15rem; width: 100%; }
+.mq-math-mode .mq-cursor { border-color: var(--accent); }
+
+/* Buttons */
+.action-btns { width: 100%; max-width: 860px; display: flex; gap: 10px; }
+.btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: all 0.18s;
+  letter-spacing: 0.3px;
+}
+.btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); filter: brightness(0.95); }
+#check-btn {
+  flex: 1;
+  background: var(--accent2);
+  color: white;
+}
+#next-btn {
+  background: #e8eaf2;
+  color: var(--text);
+  border: 1px solid var(--border);
+  display: none;
+}
+
+/* Keyboard */
+#keyboard {
+  width: 100%;
+  max-width: 860px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.kb-section-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.kb-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.kb-btn {
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--num-border);
+  background: var(--num-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: center;
+  transition: all 0.12s;
+  user-select: none;
+  line-height: 1.2;
+}
+.kb-btn:hover { filter: brightness(1.35); transform: scale(1.04); }
+.kb-btn:active { transform: scale(0.96); filter: brightness(0.9); }
+.kb-btn.trig { background: var(--trig-bg); border-color: var(--trig-border); color: #1d6fa8; }
+.kb-btn.itrig { background: var(--itrig-bg); border-color: var(--itrig-border); color: #6d28d9; }
+.kb-btn.calc { background: var(--calc-bg); border-color: var(--calc-border); color: #166534; }
+.kb-btn.op { background: #fdf0eb; border-color: #f5c9b0; color: #c2410c; }
+.kb-btn.var { background: #f0f4ff; border-color: #c0cef5; color: #1e3a8a; }
+.kb-btn.del { background: #fef2f2; border-color: #fca5a5; color: var(--wrong); }
+.kb-btn.struct { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+.kb-btn .sup { font-size: 0.65em; vertical-align: super; }
+
+/* Explanation panel */
+#explanation {
+  display: none;
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: #f0f4ff;
+  border-left: 4px solid var(--accent2);
+  border-radius: 0 8px 8px 0;
+  text-align: left;
+  font-size: 0.86rem;
+  color: #374151;
+  line-height: 1.65;
+}
+#explanation-title {
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent2);
+  margin-bottom: 5px;
+}
+#try-again-btn {
+  background: var(--accent);
+  color: white;
+  display: none;
+}
+
+/* Done screen */
+#done-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  gap: 16px;
+}
+#done-screen h2 {
+  font-size: 2.8rem;
+  color: var(--accent2);
+}
+#done-screen p { color: var(--muted); font-size: 1.05rem; }
+.restart-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 14px 44px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+.restart-btn:hover { transform: scale(1.06); filter: brightness(1.1); }
+
+/* MathQuill overrides */
+.mq-editable-field { outline: none; }
+.mq-math-mode var { font-style: normal; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Calculus Flashcards</h1>
+  <div id="progress-wrap">
+    <div id="progress-bar-outer"><div id="progress-bar-inner" style="width:100%"></div></div>
+    <span id="progress-text">0 left</span>
+  </div>
+</header>
+
+<div id="flashcard">
+  <div id="category-badge">Derivative</div>
+  <div id="card-label">Answer correctly to advance</div>
+  <div id="card-front"></div>
+</div>
+
+<div id="feedback">
+  <span id="feedback-msg"></span>
+  <div id="correct-answer-display"></div>
+  <div id="explanation"><div id="explanation-title">Why?</div><span id="explanation-text"></span></div>
+</div>
+
+<div class="input-area">
+  <div id="math-input-wrap"><span id="math-input"></span></div>
+</div>
+
+<div class="action-btns">
+  <button class="btn" id="check-btn" onclick="checkAnswer()">Check Answer</button>
+  <button class="btn" id="try-again-btn" onclick="tryAgain()">Try Again</button>
+</div>
+
+<div id="keyboard">
+  <div>
+    <div class="kb-section-label">Numbers</div>
+    <div class="kb-row">
+      <button class="kb-btn num" onclick="kbW('7')">7</button>
+      <button class="kb-btn num" onclick="kbW('8')">8</button>
+      <button class="kb-btn num" onclick="kbW('9')">9</button>
+      <button class="kb-btn num" onclick="kbW('4')">4</button>
+      <button class="kb-btn num" onclick="kbW('5')">5</button>
+      <button class="kb-btn num" onclick="kbW('6')">6</button>
+      <button class="kb-btn num" onclick="kbW('1')">1</button>
+      <button class="kb-btn num" onclick="kbW('2')">2</button>
+      <button class="kb-btn num" onclick="kbW('3')">3</button>
+      <button class="kb-btn num" onclick="kbW('0')">0</button>
+      <button class="kb-btn op" onclick="kbW('+')">+</button>
+      <button class="kb-btn op" onclick="kbW('-')">−</button>
+      <button class="kb-btn op" onclick="kbW('\\cdot')">·</button>
+      <button class="kb-btn op" onclick="kbW('\\pm')">±</button>
+      <button class="kb-btn op" onclick="kbW('\\neq')">≠</button>
+      <button class="kb-btn op" onclick="kbW('<')">&lt;</button>
+      <button class="kb-btn op" onclick="kbW('>')">&gt;</button>
+      <button class="kb-btn op" onclick="kbW('\\left(\\right)')">( )</button>
+      <button class="kb-btn del" onclick="kbBS()">⌫</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="kb-section-label">Structures</div>
+    <div class="kb-row">
+      <button class="kb-btn struct" onclick="kbC('\\frac')">a/b</button>
+      <button class="kb-btn struct" onclick="kbC('^')">x<span class="sup">n</span></button>
+      <button class="kb-btn struct" onclick="kbC('\\sqrt')">√</button>
+      <button class="kb-btn struct" onclick="kbW('\\left|\\right|')">|·|</button>
+      <button class="kb-btn struct" onclick="kbW('\\int')">∫</button>
+      <button class="kb-btn struct" onclick="kbW('\\frac{d}{dx}')">d/dx</button>
+      <button class="kb-btn struct" onclick="kbW('\\frac{du}{dx}')">du/dx</button>
+      <button class="kb-btn struct" onclick="kbW('\\frac{dv}{dx}')">dv/dx</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="kb-section-label">Variables &amp; Constants</div>
+    <div class="kb-row">
+      <button class="kb-btn var" onclick="kbW('u')">u</button>
+      <button class="kb-btn var" onclick="kbW('v')">v</button>
+      <button class="kb-btn var" onclick="kbW('a')">a</button>
+      <button class="kb-btn var" onclick="kbW('n')">n</button>
+      <button class="kb-btn var" onclick="kbW('x')">x</button>
+      <button class="kb-btn var" onclick="kbW('e')">e</button>
+      <button class="kb-btn var" onclick="kbW('C')">C</button>
+      <button class="kb-btn var" onclick="kbW('\\ln')">ln</button>
+      <button class="kb-btn var" onclick="kbW('\\pi')">π</button>
+      <button class="kb-btn var" onclick="kbW('\\infty')">∞</button>
+      <button class="kb-btn var" onclick="kbW(',')">,</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="kb-section-label">Trig Functions</div>
+    <div class="kb-row">
+      <button class="kb-btn trig" onclick="kbW('\\sin')">sin</button>
+      <button class="kb-btn trig" onclick="kbW('\\cos')">cos</button>
+      <button class="kb-btn trig" onclick="kbW('\\tan')">tan</button>
+      <button class="kb-btn trig" onclick="kbW('\\cot')">cot</button>
+      <button class="kb-btn trig" onclick="kbW('\\sec')">sec</button>
+      <button class="kb-btn trig" onclick="kbW('\\csc')">csc</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="kb-section-label">Inverse Trig Functions</div>
+    <div class="kb-row">
+      <button class="kb-btn itrig" onclick="kbW('\\arcsin')">arcsin</button>
+      <button class="kb-btn itrig" onclick="kbW('\\arccos')">arccos</button>
+      <button class="kb-btn itrig" onclick="kbW('\\arctan')">arctan</button>
+      <button class="kb-btn itrig" onclick="kbW('\\text{arccot}')">arccot</button>
+      <button class="kb-btn itrig" onclick="kbW('\\text{arcsec}')">arcsec</button>
+      <button class="kb-btn itrig" onclick="kbW('\\text{arccsc}')">arccsc</button>
+      <button class="kb-btn itrig" onclick="kbW('\\sin^{-1}')">sin<span class="sup">−1</span></button>
+      <button class="kb-btn itrig" onclick="kbW('\\cos^{-1}')">cos<span class="sup">−1</span></button>
+      <button class="kb-btn itrig" onclick="kbW('\\tan^{-1}')">tan<span class="sup">−1</span></button>
+    </div>
+  </div>
+</div>
+
+<div id="done-screen">
+  <h2>All Done!</h2>
+  <p>You cleared every flashcard. Great work!</p>
+  <button class="restart-btn" onclick="restart()">Start Over</button>
+</div>
+
+<script>
+// ─── Card Data ────────────────────────────────────────────────────────────────
+// front: LaTeX shown on card (the part before the = sign)
+// back: LaTeX displayed as correct answer
+// domain: optional domain restriction string shown in the answer
+// domainCheck: normalized strings that must appear in user's answer (if domain required)
+// accepted: array of normalized LaTeX strings considered correct
+//   (after running through norm())
+
+const ALL_CARDS = [
+
+  // ══ DERIVATIVES ══
+
+  { id:'D1', cat:'Derivative',
+    front:'\\frac{d}{dx}[c]',
+    back:'0',
+    domain: null,
+    accepted:['0'] },
+
+  { id:'D2', cat:'Derivative',
+    front:'\\frac{d}{dx}[x^n]',
+    back:'nx^{n-1}',
+    domain: null,
+    accepted:['nx^{n-1}','nx^n-1'] },
+
+  { id:'D3', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\ln u]',
+    back:'\\frac{1}{u}\\frac{du}{dx}',
+    domain: null,
+    accepted:['\\frac{1}{u}\\frac{du}{dx}','\\frac{du}{dx}\\frac{1}{u}',
+              '\\frac{du/dx}{u}','\\frac{1}{u}\\cdot\\frac{du}{dx}'] },
+
+  { id:'D4', cat:'Derivative',
+    front:'\\frac{d}{dx}[e^u]',
+    back:'e^u\\frac{du}{dx}',
+    domain: null,
+    accepted:['e^u\\frac{du}{dx}','\\frac{du}{dx}e^u',
+              'e^u\\cdot\\frac{du}{dx}'] },
+
+  { id:'D5', cat:'Derivative',
+    front:'\\frac{d}{dx}[u+v]',
+    back:'\\frac{du}{dx}+\\frac{dv}{dx}',
+    domain: null,
+    accepted:['\\frac{du}{dx}+\\frac{dv}{dx}',
+              '\\frac{dv}{dx}+\\frac{du}{dx}'] },
+
+  { id:'D6', cat:'Derivative',
+    front:'\\frac{d}{dx}[uv]',
+    back:'u\\frac{dv}{dx}+v\\frac{du}{dx}',
+    domain: null,
+    accepted:['u\\frac{dv}{dx}+v\\frac{du}{dx}',
+              'v\\frac{du}{dx}+u\\frac{dv}{dx}',
+              'u\\cdot\\frac{dv}{dx}+v\\cdot\\frac{du}{dx}'] },
+
+  { id:'D7', cat:'Derivative',
+    front:'\\frac{d}{dx}\\left[\\frac{u}{v}\\right]',
+    back:'\\frac{v\\frac{du}{dx}-u\\frac{dv}{dx}}{v^2}',
+    domain: null,
+    accepted:['\\frac{v\\frac{du}{dx}-u\\frac{dv}{dx}}{v^2}',
+              '\\frac{v\\frac{du}{dx}-u\\frac{dv}{dx}}{v^{2}}'] },
+
+  { id:'D8', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\sin u]',
+    back:'\\cos u\\,\\frac{du}{dx}',
+    domain: null,
+    accepted:['\\cosu\\frac{du}{dx}','\\cos u\\frac{du}{dx}',
+              '\\frac{du}{dx}\\cosu','\\frac{du}{dx}\\cos u'] },
+
+  { id:'D9', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\cos u]',
+    back:'-\\sin u\\,\\frac{du}{dx}',
+    domain: null,
+    accepted:['-\\sinu\\frac{du}{dx}','-\\sin u\\frac{du}{dx}',
+              '\\frac{du}{dx}(-\\sinu)','\\frac{du}{dx}(-\\sin u)',
+              '-\\frac{du}{dx}\\sinu','-\\frac{du}{dx}\\sin u'] },
+
+  { id:'D10', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\tan u]',
+    back:'\\sec^2 u\\,\\frac{du}{dx}',
+    domain: null,
+    accepted:['\\sec^2u\\frac{du}{dx}','\\sec^{2}u\\frac{du}{dx}',
+              '\\sec^2 u\\frac{du}{dx}','\\frac{du}{dx}\\sec^2u'] },
+
+  { id:'D11', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\cot u]',
+    back:'-\\csc^2 u\\,\\frac{du}{dx}',
+    domain: null,
+    accepted:['-\\csc^2u\\frac{du}{dx}','-\\csc^{2}u\\frac{du}{dx}',
+              '-\\csc^2 u\\frac{du}{dx}'] },
+
+  { id:'D12', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\sec u]',
+    back:'\\sec u\\tan u\\,\\frac{du}{dx}',
+    domain: null,
+    accepted:['\\secu\\tanu\\frac{du}{dx}','\\sec u\\tan u\\frac{du}{dx}',
+              '\\tanu\\secu\\frac{du}{dx}','\\tan u\\sec u\\frac{du}{dx}'] },
+
+  { id:'D13', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\csc u]',
+    back:'-\\csc u\\cot u\\,\\frac{du}{dx}',
+    domain: null,
+    accepted:['-\\cscu\\cotu\\frac{du}{dx}','-\\csc u\\cot u\\frac{du}{dx}',
+              '-\\cotu\\cscu\\frac{du}{dx}'] },
+
+  { id:'D14', cat:'Derivative',
+    front:'\\frac{d}{dx}[a^u]',
+    back:'a^u\\ln a\\,\\frac{du}{dx}',
+    domain: null,
+    accepted:['a^u\\lna\\frac{du}{dx}','a^u\\ln a\\frac{du}{dx}',
+              '\\lna\\cdot a^u\\frac{du}{dx}'] },
+
+  { id:'D15', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\arcsin u]',
+    back:'\\dfrac{1}{\\sqrt{1-u^2}}\\frac{du}{dx}',
+    domain: '(-1 < u < 1)',
+    domainCheck: ['-1<u<1','(-1<u<1)'],
+    accepted:['\\frac{1}{\\sqrt{1-u^2}}\\frac{du}{dx}',
+              '\\frac{1}{\\sqrt{1-u^{2}}}\\frac{du}{dx}',
+              '\\frac{du}{dx}\\frac{1}{\\sqrt{1-u^2}}'] },
+
+  { id:'D16', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\arccos u]',
+    back:'\\dfrac{-1}{\\sqrt{1-u^2}}\\frac{du}{dx}',
+    domain: '(-1 < u < 1)',
+    domainCheck: ['-1<u<1','(-1<u<1)'],
+    accepted:['\\frac{-1}{\\sqrt{1-u^2}}\\frac{du}{dx}',
+              '-\\frac{1}{\\sqrt{1-u^2}}\\frac{du}{dx}',
+              '\\frac{-1}{\\sqrt{1-u^{2}}}\\frac{du}{dx}',
+              '-\\frac{1}{\\sqrt{1-u^{2}}}\\frac{du}{dx}'] },
+
+  { id:'D17', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\arctan u]',
+    back:'\\dfrac{1}{1+u^2}\\frac{du}{dx}',
+    domain: null,
+    accepted:['\\frac{1}{1+u^2}\\frac{du}{dx}',
+              '\\frac{1}{1+u^{2}}\\frac{du}{dx}',
+              '\\frac{1}{u^2+1}\\frac{du}{dx}'] },
+
+  { id:'D18', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\text{arcsec}\\,u]',
+    back:'\\dfrac{1}{|u|\\sqrt{u^2-1}}\\frac{du}{dx}',
+    domain: '(|u| > 1)',
+    domainCheck:['|u|>1','\\left|u\\right|>1'],
+    accepted:['\\frac{1}{|u|\\sqrt{u^2-1}}\\frac{du}{dx}',
+              '\\frac{1}{\\left|u\\right|\\sqrt{u^2-1}}\\frac{du}{dx}',
+              '\\frac{1}{|u|\\sqrt{u^{2}-1}}\\frac{du}{dx}'] },
+
+  { id:'D19', cat:'Derivative',
+    front:'\\frac{d}{dx}[\\text{arccsc}\\,u]',
+    back:'\\dfrac{-1}{|u|\\sqrt{u^2-1}}\\frac{du}{dx}',
+    domain: '(|u| > 1)',
+    domainCheck:['|u|>1','\\left|u\\right|>1'],
+    accepted:['\\frac{-1}{|u|\\sqrt{u^2-1}}\\frac{du}{dx}',
+              '-\\frac{1}{|u|\\sqrt{u^2-1}}\\frac{du}{dx}',
+              '\\frac{-1}{\\left|u\\right|\\sqrt{u^2-1}}\\frac{du}{dx}',
+              '-\\frac{1}{\\left|u\\right|\\sqrt{u^2-1}}\\frac{du}{dx}'] },
+
+  // ══ INTEGRALS ══
+
+  { id:'I1', cat:'Integral',
+    front:'\\int u^n\\,du',
+    back:'\\dfrac{u^{n+1}}{n+1}+C',
+    domain: '(n \\neq -1)',
+    domainCheck:['n\\neq-1','n\\ne-1','n\\neq-1'],
+    accepted:['\\frac{u^{n+1}}{n+1}+C','\\frac{u^{n+1}}{n+1}+c'] },
+
+  { id:'I2', cat:'Integral',
+    front:'\\int\\frac{du}{u}',
+    back:'\\ln|u|+C',
+    domain: null,
+    accepted:['\\ln|u|+C','\\ln\\left|u\\right|+C',
+              '\\ln|u|+c'] },
+
+  { id:'I3', cat:'Integral',
+    front:'\\int\\cos u\\,du',
+    back:'\\sin u+C',
+    domain: null,
+    accepted:['\\sinu+C','\\sin u+C','\\sinu+c'] },
+
+  { id:'I4', cat:'Integral',
+    front:'\\int\\sin u\\,du',
+    back:'-\\cos u+C',
+    domain: null,
+    accepted:['-\\cosu+C','-\\cos u+C','-\\cosu+c'] },
+
+  { id:'I5', cat:'Integral',
+    front:'\\int\\tan u\\,du',
+    back:'\\ln|\\sec u|+C',
+    domain: null,
+    accepted:['\\ln|\\secu|+C','\\ln|\\sec u|+C',
+              '\\ln\\left|\\secu\\right|+C',
+              '\\ln\\left|\\sec u\\right|+C',
+              '-\\ln|\\cosu|+C','-\\ln|\\cos u|+C'] },
+
+  { id:'I6', cat:'Integral',
+    front:'\\int\\cot u\\,du',
+    back:'\\ln|\\sin u|+C',
+    domain: null,
+    accepted:['\\ln|\\sinu|+C','\\ln|\\sin u|+C',
+              '\\ln\\left|\\sinu\\right|+C',
+              '-\\ln|\\cscu|+C','-\\ln|\\csc u|+C'] },
+
+  { id:'I7', cat:'Integral',
+    front:'\\int\\sec^2 u\\,du',
+    back:'\\tan u+C',
+    domain: null,
+    accepted:['\\tanu+C','\\tan u+C','\\tanu+c'] },
+
+  { id:'I8', cat:'Integral',
+    front:'\\int\\csc^2 u\\,du',
+    back:'-\\cot u+C',
+    domain: null,
+    accepted:['-\\cotu+C','-\\cot u+C','-\\cotu+c'] },
+
+  { id:'I9', cat:'Integral',
+    front:'\\int\\sec u\\tan u\\,du',
+    back:'\\sec u+C',
+    domain: null,
+    accepted:['\\secu+C','\\sec u+C','\\secu+c'] },
+
+  { id:'I10', cat:'Integral',
+    front:'\\int\\csc u\\cot u\\,du',
+    back:'-\\csc u+C',
+    domain: null,
+    accepted:['-\\cscu+C','-\\csc u+C','-\\cscu+c'] },
+
+  { id:'I11', cat:'Integral',
+    front:'\\int\\sec u\\,du',
+    back:'\\ln|\\sec u+\\tan u|+C',
+    domain: null,
+    accepted:['\\ln|\\secu+\\tanu|+C','\\ln|\\sec u+\\tan u|+C',
+              '\\ln\\left|\\secu+\\tanu\\right|+C',
+              '\\ln\\left|\\sec u+\\tan u\\right|+C'] },
+
+  { id:'I12', cat:'Integral',
+    front:'\\int\\csc u\\,du',
+    back:'\\ln|\\csc u-\\cot u|+C',
+    domain: null,
+    accepted:['\\ln|\\cscu-\\cotu|+C','\\ln|\\csc u-\\cot u|+C',
+              '\\ln\\left|\\cscu-\\cotu\\right|+C',
+              '\\ln\\left|\\csc u-\\cot u\\right|+C'] },
+
+  { id:'I13', cat:'Integral',
+    front:'\\int e^u\\,du',
+    back:'e^u+C',
+    domain: null,
+    accepted:['e^u+C','e^u+c'] },
+
+  { id:'I14', cat:'Integral',
+    front:'\\int a^u\\,du',
+    back:'\\dfrac{a^u}{\\ln a}+C',
+    domain: '(a>0,\\; a\\neq 1)',
+    domainCheck:['a>0','a\\neq1','a\\ne1'],
+    accepted:['\\frac{a^u}{\\lna}+C','\\frac{a^u}{\\ln a}+C',
+              '\\frac{a^u}{\\lna}+c'] },
+
+  { id:'I15', cat:'Integral',
+    front:'\\int\\dfrac{du}{\\sqrt{a^2-u^2}}',
+    back:'\\arcsin\\dfrac{u}{a}+C',
+    domain: null,
+    accepted:['\\arcsin\\frac{u}{a}+C','\\arcsin\\frac{u}{a}+c',
+              '\\sin^{-1}\\frac{u}{a}+C','\\sin^{-1}\\frac{u}{a}+c',
+              '\\arcsin(\\frac{u}{a})+C'] },
+
+  { id:'I16', cat:'Integral',
+    front:'\\int\\dfrac{du}{a^2+u^2}',
+    back:'\\dfrac{1}{a}\\arctan\\dfrac{u}{a}+C',
+    domain: null,
+    accepted:['\\frac{1}{a}\\arctan\\frac{u}{a}+C',
+              '\\frac{1}{a}\\arctan(\\frac{u}{a})+C',
+              '\\frac{1}{a}\\tan^{-1}\\frac{u}{a}+C',
+              '\\frac{1}{a}\\tan^{-1}(\\frac{u}{a})+C'] },
+
+  { id:'I17', cat:'Integral',
+    front:'\\int\\dfrac{du}{u\\sqrt{u^2-a^2}}',
+    back:'\\dfrac{1}{a}\\,\\text{arcsec}\\,\\dfrac{|u|}{a}+C',
+    domain: null,
+    accepted:['\\frac{1}{a}\\text{arcsec}\\frac{|u|}{a}+C',
+              '\\frac{1}{a}\\text{arcsec}\\frac{\\left|u\\right|}{a}+C',
+              '\\frac{1}{a}\\text{arcsec}(\\frac{|u|}{a})+C',
+              '\\frac{1}{a}\\sec^{-1}\\frac{|u|}{a}+C'] },
+];
+
+// ─── Explanations ─────────────────────────────────────────────────────────────
+const EXPLANATIONS = {
+  D1: "A constant like $5$ has a flat horizontal graph — it never goes up or down. A flat line has slope $0$ everywhere, so its rate of change is exactly $0$.",
+
+  D2: "Think of a square with side $u$: its area is $u^2$. Growing the side by a tiny sliver adds new area along two edges, so the rate of growth is $2u$. For a cube $u^3$, it grows across $3$ faces, giving rate $3u^2$. The rule generalizes: bring the power down front and reduce the exponent by one, giving $nu^{n-1}$.",
+
+  D3: "Logarithms compress huge numbers into small ones — as $u$ grows large the graph gets flatter. The rate of change is exactly inversely proportional to the input: $\\frac{1}{u}$. By the limit definition, the difference quotient of $\\ln u$ simplifies via exponent properties to exactly $\\frac{1}{u}$.",
+
+  D4: "$e$ is defined as the unique base where $\\displaystyle\\lim_{h\\to 0}\\frac{e^h-1}{h}=1$. Because of that, its rate of growth equals its current size at every point — the derivative simplifies to $e^u$ itself.",
+
+  D5: "If you're walking at $3$ mph on a moving walkway going $2$ mph, your total speed is $5$ mph. The rate of change of $u+v$ is just $\\frac{du}{dx}+\\frac{dv}{dx}$ — individual rates simply add.",
+
+  D6: "Imagine a rectangle with width $u$ and height $v$, both growing simultaneously. New area added $=$ a strip along the top $\\left(u\\cdot dv\\right)$ plus a strip along the side $\\left(v\\cdot du\\right)$, giving $u\\frac{dv}{dx}+v\\frac{du}{dx}$.",
+
+  D7: "If the numerator $u$ grows the fraction gets bigger $\\left(+v\\frac{du}{dx}\\right)$. If the denominator $v$ grows the fraction gets smaller $\\left(-u\\frac{dv}{dx}\\right)$. The $v^2$ on the bottom scales everything correctly. Mnemonic: \"Low D-High minus High D-Low, over the square of what's below.\"",
+
+  D8: "Expanding $\\sin(u+h)$ with the identity $\\sin(A+B)=\\sin A\\cos B+\\cos A\\sin B$ and dividing by $h$, the limit evaluates precisely to $\\cos u$. The sine wave's instantaneous rate of change at every point is exactly the cosine wave.",
+
+  D9: "Expanding $\\cos(u+h)$ with $\\cos(A+B)=\\cos A\\cos B-\\sin A\\sin B$ and taking the limit yields $-\\sin u$. When $\\cos u$ is at its peak and momentarily flat, $\\sin u$ is falling the fastest — hence the negative.",
+
+  D10: "Write $\\tan u = \\frac{\\sin u}{\\cos u}$ and apply the quotient rule: $\\frac{\\cos^2 u+\\sin^2 u}{\\cos^2 u}$. The Pythagorean identity $\\sin^2 u+\\cos^2 u=1$ makes the numerator $=1$, leaving $\\frac{1}{\\cos^2 u}=\\sec^2 u$.",
+
+  D11: "Write $\\cot u=\\frac{\\cos u}{\\sin u}$ and apply the quotient rule: $\\frac{-\\sin^2 u-\\cos^2 u}{\\sin^2 u}=\\frac{-1}{\\sin^2 u}=-\\csc^2 u$. Cotangent is always decreasing, which is why the derivative is negative.",
+
+  D12: "Write $\\sec u=(\\cos u)^{-1}$ and apply the chain rule: $-1\\cdot(\\cos u)^{-2}\\cdot(-\\sin u)=\\frac{\\sin u}{\\cos^2 u}$. Factor as $\\frac{1}{\\cos u}\\cdot\\frac{\\sin u}{\\cos u}=\\sec u\\tan u$.",
+
+  D13: "Write $\\csc u=(\\sin u)^{-1}$ and differentiate: $-1\\cdot(\\sin u)^{-2}\\cdot\\cos u=\\frac{-\\cos u}{\\sin^2 u}$. Factor as $\\frac{-1}{\\sin u}\\cdot\\frac{\\cos u}{\\sin u}=-\\csc u\\cot u$. Derivatives of \"co-\" trig functions always carry a negative sign.",
+
+  D14: "Rewrite $a^u=e^{u\\ln a}$ and apply the chain rule — the multiplier $\\ln a$ appears as a scaling factor. Since the base isn't the perfect constant $e$, growth is off by exactly $\\ln a$, so we multiply by it.",
+
+  D15: "Set $\\sin y=u$ and differentiate implicitly: $\\cos y\\cdot\\frac{dy}{dx}=1$, so $\\frac{dy}{dx}=\\frac{1}{\\cos y}$. The Pythagorean identity gives $\\cos y=\\sqrt{1-u^2}$, yielding $\\frac{1}{\\sqrt{1-u^2}}$. As $u\\to\\pm 1$ the denominator $\\to 0$ and the slope shoots to $\\infty$ — those are the domain boundaries.",
+
+  D16: "Since $\\arccos u=\\frac{\\pi}{2}-\\arcsin u$, differentiating simply negates the arcsin result. Inverse cosine descends instead of ascends — same steepness, opposite sign: $-\\frac{1}{\\sqrt{1-u^2}}$.",
+
+  D17: "Set $\\tan y=u$ and differentiate implicitly: $\\sec^2 y\\cdot\\frac{dy}{dx}=1$. Using $\\sec^2 y=1+\\tan^2 y=1+u^2$ gives $\\frac{dy}{dx}=\\frac{1}{1+u^2}$. The denominator always grows, so the slope always shrinks toward zero — $\\arctan$ levels off forever.",
+
+  D18: "Set $\\sec y=u$ and differentiate implicitly: $\\sec y\\tan y\\cdot\\frac{dy}{dx}=1$. Substituting $u$ for $\\sec y$ and $\\sqrt{u^2-1}$ for $\\tan y$ (Pythagorean identity) gives $\\frac{1}{u\\sqrt{u^2-1}}$. The $|u|$ ensures the slope is positive on both the positive and negative branches of arcsec.",
+
+  D19: "Since $\\text{arccsc}\\,u=\\frac{\\pi}{2}-\\text{arcsec}\\,u$, the derivative is the exact negative of arcsec's. The graph always slopes downward, giving $-\\frac{1}{|u|\\sqrt{u^2-1}}$.",
+
+  I1: "This is the exact reverse of the power rule. Instead of bringing the exponent down and subtracting $1$, add $1$ to the power (stepping up a dimension, like going from a line to an area) and then divide by that new exponent, so differentiating back cancels perfectly: $\\frac{d}{du}\\!\\left[\\frac{u^{n+1}}{n+1}\\right]=u^n$.",
+
+  I2: "The reverse power rule requires dividing by $n+1$, but when $n=-1$ you get $\\frac{1}{u}$ — and $n+1=0$ means division by zero. Since $\\frac{d}{du}[\\ln|u|]=\\frac{1}{u}$, accumulating area under $\\frac{1}{u}$ reconstructs $\\ln|u|$. The absolute value handles $u<0$ — the curve has real area on both sides of zero even though $\\ln$ of a negative number is undefined.",
+
+  I3: "Since $\\frac{d}{du}[\\sin u]=\\cos u$, accumulating area under $\\cos u$ perfectly reconstructs $\\sin u$. Direct reversal of the derivative.",
+
+  I4: "Because $\\frac{d}{du}[\\cos u]=-\\sin u$, to undo a positive $\\sin u$ you must start with $-\\cos u$ — differentiating $-\\cos u$ gives back $+\\sin u$ with the correct sign.",
+
+  I5: "Rewrite $\\tan u=\\frac{\\sin u}{\\cos u}$. The numerator $\\sin u$ is the negative of the derivative of the denominator $\\cos u$. Let $v=\\cos u$; then the integral becomes $-\\int\\frac{dv}{v}=-\\ln|\\cos u|=\\ln|\\sec u|$.",
+
+  I6: "Rewrite $\\cot u=\\frac{\\cos u}{\\sin u}$. The numerator $\\cos u$ is the exact derivative of the denominator $\\sin u$, so the integral fits $\\int\\frac{f'}{f}\\,du=\\ln|f|$ directly, giving $\\ln|\\sin u|$.",
+
+  I7: "Since $\\frac{d}{du}[\\tan u]=\\sec^2 u$, adding up area under $\\sec^2 u$ simply returns $\\tan u$. Read the derivative chart backwards.",
+
+  I8: "Since $\\frac{d}{du}[\\cot u]=-\\csc^2 u$, integrating a positive $\\csc^2 u$ requires a negative sign to balance: $-\\cot u+C$.",
+
+  I9: "Direct reversal: $\\frac{d}{du}[\\sec u]=\\sec u\\tan u$, so $\\int\\sec u\\tan u\\,du=\\sec u+C$.",
+
+  I10: "Direct reversal: $\\frac{d}{du}[\\csc u]=-\\csc u\\cot u$, so $\\int\\csc u\\cot u\\,du=-\\csc u+C$.",
+
+  I11: "Multiply $\\sec u$ by the clever form of $1$: $\\frac{\\sec u+\\tan u}{\\sec u+\\tan u}$. The numerator $\\sec u\\tan u+\\sec^2 u$ is the exact derivative of the denominator $\\sec u+\\tan u$, so $\\int\\frac{f'}{f}\\,du=\\ln|f|$ applies, giving $\\ln|\\sec u+\\tan u|$.",
+
+  I12: "Multiply $\\csc u$ by $\\frac{\\csc u-\\cot u}{\\csc u-\\cot u}$. The numerator $(-\\csc u\\cot u+\\csc^2 u)$ is the exact derivative of the denominator $(\\csc u-\\cot u)$, giving $\\ln|\\csc u-\\cot u|$.",
+
+  I13: "Since $\\frac{d}{du}[e^u]=e^u$, the function is its own derivative. Reversing means dividing by $1$ — $e^u$ is its own antiderivative.",
+
+  I14: "Since $\\frac{d}{du}[a^u]=a^u\\ln a$, differentiating multiplies by $\\ln a$. Algebraically reversing requires dividing by that same factor: $\\frac{a^u}{\\ln a}+C$.",
+
+  I15: "The form $\\frac{1}{\\sqrt{a^2-u^2}}$ matches $\\frac{d}{du}\\!\\left[\\arcsin\\frac{u}{a}\\right]$. The constant $a$ scales the triangle — the chain rule produces a $\\frac{1}{a}$ in the denominator that cancels when you write the answer as $\\arcsin\\frac{u}{a}$.",
+
+  I16: "The fraction $\\frac{1}{a^2+u^2}$ (no square root) matches $\\frac{d}{du}\\!\\left[\\frac{1}{a}\\arctan\\frac{u}{a}\\right]$. The $\\frac{1}{a}$ in the answer corrects for the chain rule scaling.",
+
+  I17: "The variable $u$ sitting entirely outside the square root in the denominator is the hallmark of the arcsecant derivative. It matches $\\frac{d}{du}\\!\\left[\\frac{1}{a}\\,\\text{arcsec}\\frac{|u|}{a}\\right]$, and the $\\frac{1}{a}$ scales for the constant $a$."
+};
+
+// ─── App State ────────────────────────────────────────────────────────────────
+let deck = [];
+let currentIdx = 0;
+let totalCards = ALL_CARDS.length;
+let mathField;
+let answered = false;
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+$(function () {
+  const MQ = MathQuill.getInterface(2);
+  mathField = MQ.MathField(document.getElementById('math-input'), {
+    spaceBehavesLikeTab: false,
+    handlers: { enter: checkAnswer }
+  });
+  startSession();
+});
+
+function startSession() {
+  deck = shuffle([...ALL_CARDS]);
+  totalCards = deck.length;
+  currentIdx = 0;
+  showAppUI(true);
+  showCard();
+}
+
+function restart() {
+  showAppUI(true);
+  startSession();
+}
+
+function showAppUI(show) {
+  const ids = ['flashcard','feedback','math-input-wrap','keyboard'];
+  const actionBtns = document.querySelector('.action-btns');
+  ids.forEach(id => document.getElementById(id).style.display = show ? '' : 'none');
+  actionBtns.style.display = show ? '' : 'none';
+  document.getElementById('done-screen').style.display = show ? 'none' : 'flex';
+  document.querySelector('header').style.display = show ? '' : 'none';
+}
+
+// ─── Card Display ─────────────────────────────────────────────────────────────
+function showCard() {
+  if (deck.length === 0) { showDone(); return; }
+  const card = deck[currentIdx];
+
+  document.getElementById('category-badge').textContent = card.cat;
+  katex.render(card.front, document.getElementById('card-front'), {
+    displayMode: true, throwOnError: false
+  });
+
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'none';
+  fb.className = '';
+
+  mathField.latex('');
+  setTimeout(() => mathField.focus(), 80);
+
+  answered = false;
+  document.getElementById('check-btn').style.display = '';
+  document.getElementById('try-again-btn').style.display = 'none';
+  document.getElementById('explanation').style.display = 'none';
+  document.getElementById('correct-answer-display').innerHTML = '';
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const left = deck.length;
+  document.getElementById('progress-text').textContent = left + ' left';
+  const pct = ((totalCards - left) / totalCards * 100).toFixed(1);
+  document.getElementById('progress-bar-inner').style.width = pct + '%';
+}
+
+// ─── Answer Checking ──────────────────────────────────────────────────────────
+function norm(s) {
+  return s
+    .replace(/\s+/g, '')
+    .replace(/\\left/g, '')
+    .replace(/\\right/g, '')
+    .replace(/\\,/g, '')
+    .replace(/\\;/g, '')
+    .replace(/\\!/g, '')
+    .replace(/\\cdot/g, '')
+    .replace(/\\sin\^{?-1}?/g, '\\arcsin')
+    .replace(/\\sin\^\{-1\}/g, '\\arcsin')
+    .replace(/\\cos\^{?-1}?/g, '\\arccos')
+    .replace(/\\cos\^\{-1\}/g, '\\arccos')
+    .replace(/\\tan\^{?-1}?/g, '\\arctan')
+    .replace(/\\tan\^\{-1\}/g, '\\arctan')
+    .replace(/\^{(\d)}/g, '^$1')
+    .replace(/\^\{(\d)\}/g, '^$1')
+    .toLowerCase();
+}
+
+function checkAnswer() {
+  if (answered) return;
+  answered = true;
+
+  const card = deck[currentIdx];
+  const raw = mathField.latex();
+  const userNorm = norm(raw);
+
+  let mainOk = card.accepted.some(a => norm(a) === userNorm);
+  if (card.domainCheck) {
+    const domainOk = card.domainCheck.some(d => userNorm.includes(norm(d)));
+    if (!domainOk) mainOk = false;
+  }
+
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'block';
+  const msgEl = document.getElementById('feedback-msg');
+  const ansDisplay = document.getElementById('correct-answer-display');
+  const expDiv = document.getElementById('explanation');
+  const expText = document.getElementById('explanation-text');
+
+  if (mainOk) {
+    fb.className = 'correct';
+    msgEl.textContent = "You're right!";
+    ansDisplay.innerHTML = '';
+    expDiv.style.display = 'none';
+    document.getElementById('check-btn').style.display = 'none';
+    document.getElementById('try-again-btn').style.display = 'none';
+
+    // Remove card and auto-advance
+    deck.splice(currentIdx, 1);
+    if (currentIdx >= deck.length) currentIdx = 0;
+    updateProgress();
+
+    if (deck.length === 0) {
+      setTimeout(showDone, 1400);
+    } else {
+      setTimeout(showCard, 1400);
+    }
+  } else {
+    fb.className = 'wrong';
+    msgEl.textContent = "You're wrong… here's the correct answer:";
+    ansDisplay.innerHTML = '';
+
+    let fullBack = card.back;
+    if (card.domain) fullBack += ',\\quad ' + card.domain;
+    katex.render(fullBack, ansDisplay, { displayMode: true, throwOnError: false });
+
+    // Show explanation if available
+    const exp = EXPLANATIONS[card.id];
+    if (exp) {
+      expText.innerHTML = exp;
+      renderMathInElement(expDiv, {
+        delimiters: [{left:'$',right:'$',display:false}],
+        throwOnError: false
+      });
+      expDiv.style.display = 'block';
+    } else {
+      expDiv.style.display = 'none';
+    }
+
+    document.getElementById('check-btn').style.display = 'none';
+    document.getElementById('try-again-btn').style.display = '';
+  }
+}
+
+function tryAgain() {
+  mathField.latex('');
+  mathField.focus();
+  answered = false;
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('check-btn').style.display = '';
+  document.getElementById('try-again-btn').style.display = 'none';
+}
+
+function showDone() {
+  showAppUI(false);
+}
+
+// ─── Keyboard Handlers ────────────────────────────────────────────────────────
+function kbW(latex) { mathField.write(latex); mathField.focus(); }
+function kbC(cmd)   { mathField.cmd(cmd);     mathField.focus(); }
+function kbBS()     { mathField.keystroke('Backspace'); mathField.focus(); }
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+</script>
+</body>
+</html>
